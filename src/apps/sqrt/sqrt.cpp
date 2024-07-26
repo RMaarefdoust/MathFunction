@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -7,6 +8,7 @@
 #include <universal/number/cfloat/cfloat.hpp>
 #include <universal/number/posit/posit.hpp>
 #include <universal/number/bfloat/bfloat.hpp>
+#include <universal/number/fixpnt/fixpnt.hpp>
 
 // Template function to compute the absolute value
 template<typename Real>
@@ -42,7 +44,9 @@ sw::universal::posit<32, 2> sqrt_custom(sw::universal::posit<32, 2> value) {
 
 // Template function to compute the square root using Heron's method (original version)
 template<typename Real>
-Real heronSqrtOriginal(Real number, Real tolerance = 1e-7, int maxIterations = 1000) {
+Real heronSqrtOriginal(Real number, Real tolerance = 1e-7, int maxIterations = 1000) 
+{	
+	using ::fabs;
     if (number < 0) {
         std::cerr << "Error: Negative input to sqrt function." << std::endl;
         return -1;
@@ -54,7 +58,8 @@ Real heronSqrtOriginal(Real number, Real tolerance = 1e-7, int maxIterations = 1
 
     do {
         nextGuess = (guess + number / guess) * 0.5;
-        difference = fabs_custom(nextGuess - guess);
+
+        difference = fabs(nextGuess - guess);
         guess = nextGuess;
         iterations++;
     } while (difference > tolerance && iterations < maxIterations);
@@ -160,13 +165,19 @@ int main() {
     using Posit32 = sw::universal::posit<32, 2>;
     using Bfloat16 = sw::universal::bfloat16;
     using Half = sw::universal::half;
+    using Fixpnt16 = sw::universal::fixpnt<16, 8>;
     using Float = float;
     using Double = double;
 
     std::cout << std::setw(15) << "Posit16\n";
     runComparisons<Posit16>("Posit16");
+
     std::cout << std::setw(15) << "Posit32\n";
     runComparisons<Posit32>("Posit32");
+	
+	//std::cout << std::setw(15) << "Fixpnt16\n";
+    //runComparisons<Fixpnt16>("Fixpnt16");
+
     // Comment out bfloat16 and half for now as their fabs and sqrt are not available
     // runComparisons<Bfloat16>("Bfloat16");
     // runComparisons<Half>("Half");
