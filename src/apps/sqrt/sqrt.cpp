@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 
-// Define the types
+// the types
 using Posit16 = sw::universal::posit<16, 2>;
 using Posit32 = sw::universal::posit<32, 2>;
 using Fixpnt16 = sw::universal::fixpnt<16, 8>;
@@ -104,7 +104,6 @@ int main() {
         total_error_float += error_float;
         count++;
 
-        // Print results
         std::cout << "Value: " << value << std::endl;
         print_result("Posit16", p16, sqrt_p16);
         print_result("Posit32", p32, sqrt_p32);
@@ -113,7 +112,7 @@ int main() {
         print_result("Double", d, sqrt_d);
         std::cout << "----------------------------------------" << std::endl;
 
-        // Save results to CSV data with scientific notation
+        // Save results to CSV 
         std::stringstream ss;
         ss << std::scientific << std::setprecision(15);
         csv_data.push_back({
@@ -125,7 +124,7 @@ int main() {
         });
     }
 
-    // Calculate average errors
+    // average errors
     double avg_error_posit16 = total_error_posit16 / count;
     double avg_error_posit32 = total_error_posit32 / count;
     double avg_error_fixpnt16 = total_error_fixpnt16 / count;
@@ -136,7 +135,6 @@ int main() {
     std::cout << "Average Error Fixpnt16: " << avg_error_fixpnt16 << std::endl;
     std::cout << "Average Error Float: " << avg_error_float << std::endl;
 
-    // Write results to CSV file
     write_to_csv("sqrt_comparison.csv", csv_data);
 
     return 0;
