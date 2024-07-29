@@ -1,192 +1,143 @@
-
-#include <iostream>
-#include <iomanip>
-#include <cmath>
-#include <chrono>
-#include <vector>
-#include <fstream>
-#include <universal/number/cfloat/cfloat.hpp>
 #include <universal/number/posit/posit.hpp>
-#include <universal/number/bfloat/bfloat.hpp>
 #include <universal/number/fixpnt/fixpnt.hpp>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <string>
+#include <sstream>
 
-// Template function to compute the absolute value
-template<typename Real>
-Real fabs_custom(Real value) {
-    return std::fabs(value);
-}
+// Define the types
+using Posit16 = sw::universal::posit<16, 2>;
+using Posit32 = sw::universal::posit<32, 2>;
+using Fixpnt16 = sw::universal::fixpnt<16, 8>;
+using Float = float;
+using Double = double;
 
-template<>
-sw::universal::posit<16, 2> fabs_custom(sw::universal::posit<16, 2> value) {
-    return sw::universal::fabs(value);
-}
-
-template<>
-sw::universal::posit<32, 2> fabs_custom(sw::universal::posit<32, 2> value) {
-    return sw::universal::fabs(value);
-}
-
-// Template function to compute the square root
-template<typename Real>
-Real sqrt_custom(Real value) {
+// Template function to calculate the square root
+template <typename T>
+T calculate_sqrt(T value) {
     return std::sqrt(value);
 }
 
-template<>
-sw::universal::posit<16, 2> sqrt_custom(sw::universal::posit<16, 2> value) {
+// Specialization for Posit types
+template <>
+Posit16 calculate_sqrt(Posit16 value) {
     return sw::universal::sqrt(value);
 }
 
-template<>
-sw::universal::posit<32, 2> sqrt_custom(sw::universal::posit<32, 2> value) {
+template <>
+Posit32 calculate_sqrt(Posit32 value) {
     return sw::universal::sqrt(value);
 }
 
-// Template function to compute the square root using Heron's method (original version)
-template<typename Real>
-Real heronSqrtOriginal(Real number, Real tolerance = 1e-7, int maxIterations = 1000) 
-{	
-	using ::fabs;
-    if (number < 0) {
-        std::cerr << "Error: Negative input to sqrt function." << std::endl;
-        return -1;
-    }
-
-    Real guess = number * 0.5;
-    Real difference, nextGuess;
-    int iterations = 0;
-
-    do {
-        nextGuess = (guess + number / guess) * 0.5;
-
-        difference = fabs(nextGuess - guess);
-        guess = nextGuess;
-        iterations++;
-    } while (difference > tolerance && iterations < maxIterations);
-
-    return nextGuess;
+// Specialization for Fixpnt16
+template <>
+Fixpnt16 calculate_sqrt(Fixpnt16 value) {
+    return sw::universal::sqrt(value);
 }
 
-// Template function to compute the square root using Heron's method (improved version)
-template<typename Real>
-Real heronSqrtImproved(Real number, Real tolerance = 1e-7, int maxIterations = 1000) {
-    if (number < 0) {
-        std::cerr << "Error: Negative input to sqrt function." << std::endl;
-        return -1;
-    }
-
-    if (number == static_cast<Real>(0)) {
-        return 0;
-    }
-
-    Real guess = number * 0.5;
-    Real difference, nextGuess;
-    int iterations = 0;
-
-    do {
-        Real guessSquared = guess * guess;
-        Real a = (number - guessSquared) / (2.0 * guess);
-        Real guessPlusA = guess + a;
-        nextGuess = guessPlusA - (a * a) / (2.0 * guessPlusA);
-        difference = fabs_custom(nextGuess - guess);
-        guess = nextGuess;
-        iterations++;
-    } while (difference > tolerance * (nextGuess + guess) && iterations < maxIterations);
-
-    return nextGuess;
+// Function to print the results in a formatted manner
+template <typename T>
+void print_result(const std::string& type_name, T value, T result) {
+    std::cout << std::setw(10) << type_name << ": sqrt(" << value << ") = " << result << std::endl;
 }
 
-// Template function to run comparisons between the original, improved, and system sqrt functions
-template<typename Real>
-void runComparisons(const std::string& typeName) {
-    std::vector<Real> numbers;
-    for (int i = -100; i <= 100; ++i) {
-        Real number = std::pow(10.0, i);
-        if (number < 1.0)
-            numbers.push_back(number);
+// Function to write results to a CSV file
+void write_to_csv(const std::string& filename, const std::vector<std::vector<std::string>>& data) {
+    std::ofstream file(filename);
+    for (const auto& row : data) {
+        for (size_t i = 0; i < row.size(); ++i) {
+            file << row[i];
+            if (i < row.size() - 1) {
+                file << ",";
+            }
+        }
+        file << "\n";
     }
-
-    std::vector<Real> resultsOriginal;
-    std::vector<Real> resultsImproved;
-    std::vector<Real> resultsSystem;
-
-    std::cout << std::setw(15) << "Number"
-              << std::setw(20) << "Original Result"
-              << std::setw(20) << "Improved Result"
-              << std::setw(20) << "System Result"
-              << std::setw(20) << "Original Time"
-              << std::setw(20) << "Improved Time"
-              << "\n";
-
-    for (size_t i = 0; i < numbers.size(); i += 5) {
-        Real number = numbers[i];
-
-        auto start = std::chrono::high_resolution_clock::now();
-        Real sqrtResultOriginal = heronSqrtOriginal(number);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> durationOriginal = end - start;
-
-        start = std::chrono::high_resolution_clock::now();
-        Real sqrtResultImproved = heronSqrtImproved(number);
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> durationImproved = end - start;
-
-        start = std::chrono::high_resolution_clock::now();
-        Real sqrtResultSystem = sqrt_custom(number);
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> durationSystem = end - start;
-
-        resultsOriginal.push_back(sqrtResultOriginal);
-        resultsImproved.push_back(sqrtResultImproved);
-        resultsSystem.push_back(sqrtResultSystem);
-
-        std::cout << std::setw(15) << number
-                  << std::setw(20) << sqrtResultOriginal
-                  << std::setw(20) << sqrtResultImproved
-                  << std::setw(20) << sqrtResultSystem
-                  << std::setw(20) << durationOriginal.count()
-                  << std::setw(20) << durationImproved.count()
-                  << "\n";
-    }
-
-    std::ofstream outFile("comparison_results_heron_" + typeName + ".csv");
-    outFile << "Number,Original Result,Improved Result,System Result\n";
-    for (size_t i = 0; i < numbers.size(); ++i) {
-        outFile << numbers[i] << ","
-                << resultsOriginal[i] << ","
-                << resultsImproved[i] << ","
-                << resultsSystem[i] << "\n";
-    }
-    outFile.close();
+    file.close();
 }
 
 int main() {
-    using Posit16 = sw::universal::posit<16, 2>;
-    using Posit32 = sw::universal::posit<32, 2>;
-    using Bfloat16 = sw::universal::bfloat16;
-    using Half = sw::universal::half;
-    using Fixpnt16 = sw::universal::fixpnt<16, 8>;
-    using Float = float;
-    using Double = double;
+    // Define a range of very small numbers close to zero
+    Float start = 1e-8;
+    Float end = 1e-6;
+    Float step = 1e-8;
 
-    std::cout << std::setw(15) << "Posit16\n";
-    runComparisons<Posit16>("Posit16");
+    std::cout << std::scientific << std::setprecision(15);
 
-    std::cout << std::setw(15) << "Posit32\n";
-    runComparisons<Posit32>("Posit32");
-	
-	//std::cout << std::setw(15) << "Fixpnt16\n";
-    //runComparisons<Fixpnt16>("Fixpnt16");
+    // Prepare the CSV data
+    std::vector<std::vector<std::string>> csv_data;
+    csv_data.push_back({"Value", "Posit16", "Posit32", "Fixpnt16", "Float", "Double"});
 
-    // Comment out bfloat16 and half for now as their fabs and sqrt are not available
-    // runComparisons<Bfloat16>("Bfloat16");
-    // runComparisons<Half>("Half");
-    std::cout << std::setw(15) << "Float\n";
-    runComparisons<Float>("Float");
-    std::cout << std::setw(15) << "Double\n";
-    runComparisons<Double>("Double");
+    double total_error_posit16 = 0.0;
+    double total_error_posit32 = 0.0;
+    double total_error_fixpnt16 = 0.0;
+    double total_error_float = 0.0;
+    int count = 0;
 
-    std::cout << "\nResults written to CSV files\n";
+    for (Float value = start; value <= end; value += step) {
+        // Convert the value to each type
+        Posit16 p16(value);
+        Posit32 p32(value);
+        Fixpnt16 f16(value);
+        Float f(value);
+        Double d(value);
+
+        // Calculate square roots
+        auto sqrt_p16 = calculate_sqrt(p16);
+        auto sqrt_p32 = calculate_sqrt(p32);
+        auto sqrt_f16 = calculate_sqrt(f16);
+        auto sqrt_f = calculate_sqrt(f);
+        auto sqrt_d = calculate_sqrt(d);
+
+        // Calculate errors
+        double error_posit16 = std::abs(static_cast<Double>(sqrt_p16) - sqrt_d);
+        double error_posit32 = std::abs(static_cast<Double>(sqrt_p32) - sqrt_d);
+        double error_fixpnt16 = std::abs(static_cast<Double>(sqrt_f16) - sqrt_d);
+        double error_float = std::abs(static_cast<Double>(sqrt_f) - sqrt_d);
+
+        total_error_posit16 += error_posit16;
+        total_error_posit32 += error_posit32;
+        total_error_fixpnt16 += error_fixpnt16;
+        total_error_float += error_float;
+        count++;
+
+        // Print results
+        std::cout << "Value: " << value << std::endl;
+        print_result("Posit16", p16, sqrt_p16);
+        print_result("Posit32", p32, sqrt_p32);
+        print_result("Fixpnt16", f16, sqrt_f16);
+        print_result("Float", f, sqrt_f);
+        print_result("Double", d, sqrt_d);
+        std::cout << "----------------------------------------" << std::endl;
+
+        // Save results to CSV data with scientific notation
+        std::stringstream ss;
+        ss << std::scientific << std::setprecision(15);
+        csv_data.push_back({
+            ss.str(), std::to_string(static_cast<Double>(sqrt_p16)),
+            std::to_string(static_cast<Double>(sqrt_p32)),
+            std::to_string(static_cast<Double>(sqrt_f16)),
+            std::to_string(static_cast<Double>(sqrt_f)),
+            std::to_string(sqrt_d)
+        });
+    }
+
+    // Calculate average errors
+    double avg_error_posit16 = total_error_posit16 / count;
+    double avg_error_posit32 = total_error_posit32 / count;
+    double avg_error_fixpnt16 = total_error_fixpnt16 / count;
+    double avg_error_float = total_error_float / count;
+
+    std::cout << "Average Error Posit16: " << avg_error_posit16 << std::endl;
+    std::cout << "Average Error Posit32: " << avg_error_posit32 << std::endl;
+    std::cout << "Average Error Fixpnt16: " << avg_error_fixpnt16 << std::endl;
+    std::cout << "Average Error Float: " << avg_error_float << std::endl;
+
+    // Write results to CSV file
+    write_to_csv("sqrt_comparison.csv", csv_data);
 
     return 0;
 }
