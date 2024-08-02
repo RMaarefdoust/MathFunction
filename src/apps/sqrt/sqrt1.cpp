@@ -15,13 +15,13 @@ using Fixpnt16 = sw::universal::fixpnt<16, 8>;
 using Float = float;
 using Double = double;
 
-// Template function to calculate the square root
+// Template square root
 template <typename T>
 T calculate_sqrt(T value) {
     return std::sqrt(value);
 }
 
-// Specialization for Posit types
+//  Posit types
 template <>
 Posit16 calculate_sqrt(Posit16 value) {
     return sw::universal::sqrt(value);
@@ -32,19 +32,19 @@ Posit32 calculate_sqrt(Posit32 value) {
     return sw::universal::sqrt(value);
 }
 
-// Specialization for Fixpnt16
+// Fixpnt16
 template <>
 Fixpnt16 calculate_sqrt(Fixpnt16 value) {
     return sw::universal::sqrt(value);
 }
 
-// Function to print the results in a formatted manner
+// Function to print 
 template <typename T>
 void print_result(const std::string& type_name, T value, T result) {
     std::cout << std::setw(10) << type_name << ": sqrt(" << value << ") = " << result << std::endl;
 }
 
-// Function to write results to a CSV file
+// CSV file
 void write_to_csv(const std::string& filename, const std::vector<std::vector<std::string>>& data) {
     std::ofstream file(filename);
     for (const auto& row : data) {
@@ -60,14 +60,14 @@ void write_to_csv(const std::string& filename, const std::vector<std::vector<std
 }
 
 int main() {
-    // Define a range of very small numbers close to zero
+    // numbers close to zero
     Float start = 1e-8;
     Float end = 1e-6;
     Float step = 1e-8;
 
     std::cout << std::scientific << std::setprecision(15);
 
-    // Prepare the CSV data
+    // Prepare CSV 
     std::vector<std::vector<std::string>> csv_data;
     csv_data.push_back({"Value", "Posit16", "Posit32", "Fixpnt16", "Float", "Double"});
 
@@ -78,21 +78,21 @@ int main() {
     int count = 0;
 
     for (Float value = start; value <= end; value += step) {
-        // Convert the value to each type
+        // Convert type
         Posit16 p16(value);
         Posit32 p32(value);
         Fixpnt16 f16(value);
         Float f(value);
         Double d(value);
 
-        // Calculate square roots
+        // square roots
         auto sqrt_p16 = calculate_sqrt(p16);
         auto sqrt_p32 = calculate_sqrt(p32);
         auto sqrt_f16 = calculate_sqrt(f16);
         auto sqrt_f = calculate_sqrt(f);
         auto sqrt_d = calculate_sqrt(d);
 
-        // Calculate errors
+        // errors
         double error_posit16 = std::abs(static_cast<Double>(sqrt_p16) - sqrt_d);
         double error_posit32 = std::abs(static_cast<Double>(sqrt_p32) - sqrt_d);
         double error_fixpnt16 = std::abs(static_cast<Double>(sqrt_f16) - sqrt_d);

@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <bitset>
 
 // the types
 using Posit16 = sw::universal::posit<16, 2>;
@@ -19,25 +18,25 @@ using Double = double;
 // Template square root
 template <typename T>
 T calculate_sqrt(T value) {
-    return std::sqrt(value);
+    return sqrt(value);
 }
 
-// Posit types
-template <>
-Posit16 calculate_sqrt(Posit16 value) {
-    return sw::universal::sqrt(value);
-}
+// //  Posit types
+// template <>
+// Posit16 calculate_sqrt(Posit16 value) {
+//     return sw::universal::sqrt(value);
+// }
 
-template <>
-Posit32 calculate_sqrt(Posit32 value) {
-    return sw::universal::sqrt(value);
-}
+// template <>
+// Posit32 calculate_sqrt(Posit32 value) {
+//     return sw::universal::sqrt(value);
+// }
 
-// Fixpnt16
-template <>
-Fixpnt16 calculate_sqrt(Fixpnt16 value) {
-    return sw::universal::sqrt(value);
-}
+// // Fixpnt16
+// template <>
+// Fixpnt16 calculate_sqrt(Fixpnt16 value) {
+//     return sw::universal::sqrt(value);
+// }
 
 // Function to print 
 template <typename T>
@@ -61,13 +60,10 @@ void write_to_csv(const std::string& filename, const std::vector<std::vector<std
 }
 
 int main() {
-    // Define bitset range
-    const int bitset_size = 16; // Adjust size as needed
-    const double scale_factor = 1e-10; // Small numbers close to zero
-
-    unsigned long start = 1; // Start at 1
-    unsigned long end = 5;  // End at 5
-    unsigned long step = 1;  // Increment by 1
+    // numbers close to zero
+    double start = 1e-8;
+    double end = 1e-6;
+    double step = 1e-8;
 
     std::cout << std::scientific << std::setprecision(15);
 
@@ -81,22 +77,20 @@ int main() {
     double total_error_float = 0.0;
     int count = 0;
 
-    for (unsigned long value = start; value <= end; value += step) {
-        double double_value = value * scale_factor;
-
+    for (double value = start; value <= end; value += step) {
         // Convert type
-        Posit16 p16(double_value);
-        Posit32 p32(double_value);
-        Fixpnt16 f16(double_value);
-        Float f(double_value);
-        Double d(double_value);
+        Posit16 p16(value);
+        Posit32 p32(value);
+        Fixpnt16 f16(value);
+        Float f(value);  // single precision 32 bit
+        // Double d(value);
 
         // square roots
         auto sqrt_p16 = calculate_sqrt(p16);
         auto sqrt_p32 = calculate_sqrt(p32);
         auto sqrt_f16 = calculate_sqrt(f16);
         auto sqrt_f = calculate_sqrt(f);
-        auto sqrt_d = calculate_sqrt(d);
+        auto sqrt_d = calculate_sqrt(value);
 
         // errors
         double error_posit16 = std::abs(static_cast<Double>(sqrt_p16) - sqrt_d);
@@ -110,12 +104,12 @@ int main() {
         total_error_float += error_float;
         count++;
 
-        std::cout << "Value: " << double_value << std::endl;
+        std::cout << "Value: " << value << std::endl;
         print_result("Posit16", p16, sqrt_p16);
         print_result("Posit32", p32, sqrt_p32);
         print_result("Fixpnt16", f16, sqrt_f16);
         print_result("Float", f, sqrt_f);
-        print_result("Double", d, sqrt_d);
+        print_result("Double", value, sqrt_d);
         std::cout << "----------------------------------------" << std::endl;
 
         // Save results to CSV 
